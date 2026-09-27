@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/Docs/">
+    <File Path="AGENTS.md" />
+    <File Path="CLAUDE.md" />
+    <File Path="LICENSE.txt" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/Source/">
+    <Project Path="Oben.Application/Oben.Application.csproj" />
+    <Project Path="Oben.Domain/Oben.Domain.csproj" />
+    <Project Path="Oben.Infrastructure/Oben.Infrastructure.csproj" />
+  </Folder>
+  <Project Path="Oben.Api/Oben.Api.csproj" />
+  <Project Path="Oben.Maui/Oben.Maui.csproj">
+    <Deploy Solution="Debug|*" />
+  </Project>
+</Solution>
