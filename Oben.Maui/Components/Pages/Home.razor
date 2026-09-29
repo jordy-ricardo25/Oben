@@ -1,5 +1,94 @@
-﻿@page "/"
+@page "/auth"
+@inject NavigationManager Navigation
+@inject Oben.Maui.Services.ObenApiClient ApiClient
+@inject Oben.Maui.Services.SessionState Session
+@using System.ComponentModel.DataAnnotations
 
-<h1>Hello, world!</h1>
+<section class="login-page">
+    @* <div class="login-art">
+        <div class="brand-pill">Oben</div>
+        <h1>Gestiona productos con una vista clara.</h1>
+        <p>Una interfaz sencilla para entrar, revisar el catalogo y mantener los datos bajo control.</p>
+        <div class="login-stats" aria-label="Resumen de funciones">
+            <span>CRUD</span>
+            <span>SQL Server</span>
+            <span>Auditoria</span>
+        </div>
+    </div> *@
 
-Welcome to your new app.
+    <div class="login-card">
+        <EditForm Model="loginModel" OnValidSubmit="LoginAsync">
+            <DataAnnotationsValidator />
+            <div class="form-heading">
+                <span>Bienvenido</span>
+                <h2>Inicia sesion</h2>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="alert">@errorMessage</div>
+            }
+
+            <label class="field">
+                <span>Email</span>
+                <InputText @bind-Value="loginModel.Email" placeholder="admin@oben.local" />
+                <ValidationMessage For="() => loginModel.Email" />
+            </label>
+
+            <label class="field">
+                <span>Password</span>
+                <InputText @bind-Value="loginModel.Password" type="password" placeholder="admin123" />
+                <ValidationMessage For="() => loginModel.Password" />
+            </label>
+
+            <button class="button primary wide" type="submit" disabled="@isBusy">
+                @(isBusy ? "Entrando..." : "Entrar")
+            </button>
+        </EditForm>
+    </div>
+</section>
+
+@code {
+    private readonly LoginFormModel loginModel = new();
+    private bool isBusy;
+    private string? errorMessage;
+
+    protected override void OnInitialized()
+    {
+        if (Session.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/");
+        }
+    }
+
+    private async Task LoginAsync()
+    {
+        isBusy = true;
+        errorMessage = null;
+
+        try
+        {
+            var user = await ApiClient.LoginAsync(loginModel.Email, loginModel.Password, CancellationToken.None);
+            Session.SignIn(user);
+            Navigation.NavigateTo("/");
+        }
+        catch (Exception exception)
+        {
+            errorMessage = exception.Message;
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private sealed class LoginFormModel
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = "admin@oben.local";
+
+        [Required]
+        public string Password { get; set; } = "admin123";
+    }
+}

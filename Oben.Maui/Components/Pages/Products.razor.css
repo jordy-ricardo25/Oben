@@ -1,0 +1,230 @@
+.products-page {
+    min-height: 100vh;
+    background: var(--bg);
+}
+
+.products-hero {
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+}
+
+.products-hero-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    width: min(1180px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: clamp(22px, 4vw, 44px) 0;
+}
+
+.products-content {
+    width: min(1180px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: clamp(18px, 4vw, 34px) 0 44px;
+}
+
+.products-hero h1 {
+    font-size: clamp(2rem, 4vw, 3.25rem);
+    line-height: 1;
+}
+
+.products-hero p {
+    margin-top: 10px;
+    color: var(--muted);
+}
+
+.toolbar,
+.product-card-header,
+.product-card-footer,
+.modal-header,
+.modal-actions,
+.header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.user-chip {
+    display: grid;
+    gap: 2px;
+    min-width: 180px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 9px 12px;
+    background: var(--surface-muted);
+}
+
+.user-chip span {
+    color: var(--muted);
+    font-size: 0.82rem;
+}
+
+.toolbar {
+    margin-bottom: 22px;
+}
+
+.search-box {
+    position: relative;
+    flex: 1;
+}
+
+.search-box span {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+}
+
+.search-box input {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 13px 14px 13px 42px;
+    color: var(--ink);
+    background: #fff;
+    outline: none;
+}
+
+.search-box input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(22, 97, 90, 0.12);
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 16px;
+}
+
+.product-card {
+    display: grid;
+    gap: 14px;
+    min-height: 230px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px;
+    background: #fff;
+}
+
+.product-card h2 {
+    font-size: 1.18rem;
+}
+
+.product-card p {
+    min-height: 48px;
+    color: var(--muted);
+    line-height: 1.5;
+}
+
+.product-card-footer strong {
+    font-size: 1.25rem;
+}
+
+.card-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.icon-button {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    min-width: 42px;
+    min-height: 42px;
+    padding: 0 16px;
+    color: var(--ink);
+    background: var(--surface-muted);
+    font-weight: 800;
+}
+
+.icon-button.danger {
+    color: #fff;
+    background: var(--danger);
+    border-color: transparent;
+}
+
+.empty-state {
+    border: 1px dashed var(--line);
+    border-radius: var(--radius);
+    padding: 34px;
+    color: var(--muted);
+    background: var(--surface-muted);
+    text-align: center;
+}
+
+.empty-state h2,
+.modal-header h2 {
+    margin-top: 4px;
+    font-size: 1.5rem;
+}
+
+.stock-badge,
+.product-id {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 7px 10px;
+    color: var(--muted);
+    background: rgba(255, 255, 255, 0.66);
+    font-size: 0.82rem;
+}
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+    background: rgba(34, 32, 29, 0.42);
+}
+
+.modal-card {
+    width: min(560px, 100%);
+    max-height: min(720px, calc(100vh - 36px));
+    overflow: auto;
+    border: 1px solid rgba(82, 74, 62, 0.16);
+    border-radius: var(--radius);
+    padding: 24px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+}
+
+.modal-card.compact {
+    width: min(460px, 100%);
+}
+
+.modal-header {
+    margin-bottom: 20px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.modal-actions {
+    justify-content: flex-end;
+    margin-top: 18px;
+}
+
+@media (max-width: 760px) {
+    .products-hero-inner,
+    .toolbar,
+    .header-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .header-actions,
+    .toolbar .button,
+    .user-chip {
+        width: 100%;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
