@@ -54,52 +54,52 @@ Responsabilidades esperadas:
 
 Tablas requeridas:
 
-- `usuarios`: usuarios usados para iniciar sesion.
-- `productos`: entidad principal del CRUD.
-- `auditoria_actualizacion`: cambios generados por actualizaciones.
-- `auditoria_eliminacion`: registros eliminados.
+- `users`: usuarios usados para iniciar sesion.
+- `products`: entidad principal del CRUD.
+- `product_update_audit`: cambios generados por actualizaciones.
+- `product_delete_audit`: registros eliminados.
 
 Campos minimos:
 
 ```text
-usuarios
+users
 - id
-- nombre
+- name
 - email
 - password
 
-productos
+products
 - id
-- nombre
-- descripcion
-- precio
+- name
+- description
+- price
 - stock
 
-auditoria_actualizacion
+product_update_audit
 - id
-- tabla
-- registro_id
-- campo
-- old
-- new
-- who
-- fecha
+- table_name
+- record_id
+- field_name
+- old_value
+- new_value
+- user_id
+- created_at
 
-auditoria_eliminacion
+product_delete_audit
 - id
-- tabla
-- registro_id
-- old
-- who
-- fecha
+- table_name
+- record_id
+- old_value
+- user_id
+- created_at
 ```
 
 ## Auditoria
 
 La auditoria debe implementarse con triggers de SQL Server:
 
-- En `UPDATE productos`, el trigger compara `deleted` e `inserted` y registra los cambios en `auditoria_actualizacion`.
-- En `DELETE productos`, el trigger usa `deleted` para registrar el estado anterior en `auditoria_eliminacion`.
+- En `UPDATE products`, el trigger compara `deleted` e `inserted` y registra los cambios en `product_update_audit`.
+- En `DELETE products`, el trigger usa `deleted` para registrar el estado anterior en `product_delete_audit`.
 
 La aplicacion debe establecer el usuario autenticado en la sesion SQL antes de actualizar o eliminar:
 
@@ -165,6 +165,33 @@ Ejecutar API:
 dotnet run --project .\Oben.Api\Oben.Api.csproj
 ```
 
+Swagger queda disponible en:
+
+```text
+https://localhost:7212/swagger
+http://localhost:5277/swagger
+```
+
+Configurar SQL Server:
+
+```json
+"ConnectionStrings": {
+  "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=oben;Trusted_Connection=True;TrustServerCertificate=True"
+}
+```
+
+Crear tablas y triggers:
+
+```powershell
+sqlcmd -S localhost -d Oben -i .\Oben.Infrastructure\Sql\Database.sql
+```
+
+Insertar datos demo opcionales:
+
+```powershell
+sqlcmd -S localhost -d Oben -i .\Oben.Infrastructure\Sql\Database.Seed.sql
+```
+
 Ejecutar MAUI en Windows:
 
 ```powershell
@@ -181,6 +208,6 @@ Al finalizar, el evaluador debe poder:
 - Crear un producto.
 - Editar un producto.
 - Eliminar un producto.
-- Verificar en SQL Server que las actualizaciones generan registros con `old`, `new` y `who`.
-- Verificar en SQL Server que las eliminaciones generan registros con `old` y `who`.
+- Verificar en SQL Server que las actualizaciones generan registros con `old_value`, `new_value` y `user_id`.
+- Verificar en SQL Server que las eliminaciones generan registros con `old_value` y `user_id`.
 - Confirmar en el codigo el uso de CQRS, MediatR, FluentValidation, DDD ligero, SQL directo y mapeo manual.
