@@ -1,6 +1,46 @@
 @Oben.Api_HostAddress = http://localhost:5277
 
-GET {{Oben.Api_HostAddress}}/weatherforecast/
+POST {{Oben.Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@oben.local",
+  "password": "admin123"
+}
+
+###
+
+GET {{Oben.Api_HostAddress}}/api/products
 Accept: application/json
+
+###
+
+POST {{Oben.Api_HostAddress}}/api/products
+Content-Type: application/json
+
+{
+  "name": "Producto demo",
+  "description": "Creado desde Oben.Api.http",
+  "price": 10.50,
+  "stock": 5
+}
+
+###
+
+PUT {{Oben.Api_HostAddress}}/api/products/1
+Content-Type: application/json
+X-User-Id: 1
+
+{
+  "name": "Producto demo actualizado",
+  "description": "Actualizado desde Oben.Api.http",
+  "price": 12.75,
+  "stock": 7
+}
+
+###
+
+DELETE {{Oben.Api_HostAddress}}/api/products/1
+X-User-Id: 1
 
 ###

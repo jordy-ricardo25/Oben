@@ -1,0 +1,293 @@
+@page "/"
+@inject NavigationManager Navigation
+@inject Oben.Maui.Services.ObenApiClient ApiClient
+@inject Oben.Maui.Services.SessionState Session
+@using Oben.Maui.Services.Models
+
+<section class="products-page">
+    <header class="products-hero">
+        <div class="products-hero-inner">
+            <div>
+                <span class="eyebrow">Catalogo</span>
+                <h1>Productos</h1>
+                <p>Consulta, crea y actualiza productos sin salir de esta vista.</p>
+            </div>
+            <div class="header-actions">
+                <div class="user-chip">
+                    <strong>@Session.CurrentUser?.Name</strong>
+                    <span>@Session.CurrentUser?.Email</span>
+                </div>
+                <button class="button ghost" @onclick="SignOut">Salir</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="products-content">
+        <div class="toolbar">
+            <div class="search-box">
+                <span aria-hidden="true">⌕</span>
+                <input @bind="searchText" @bind:event="oninput" placeholder="Buscar producto" />
+            </div>
+            <button class="button primary" @onclick="OpenCreateModal">Agregar producto</button>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            <div class="alert">@errorMessage</div>
+        }
+
+        @if (isLoading)
+        {
+            <div class="empty-state">Cargando productos...</div>
+        }
+        else if (!FilteredProducts.Any())
+        {
+            <div class="empty-state">
+                <h2>No hay productos para mostrar</h2>
+                <p>Agrega el primero o ajusta la busqueda.</p>
+            </div>
+        }
+        else
+        {
+            <div class="product-grid">
+                @foreach (var product in FilteredProducts)
+                {
+                    <article class="product-card">
+                        <div class="product-card-header">
+                            <span class="product-id">#@product.Id</span>
+                            <span class="stock-badge">@product.Stock unidades</span>
+                        </div>
+                        <h2>@product.Name</h2>
+                        <p>@(string.IsNullOrWhiteSpace(product.Description) ? "Sin descripcion" : product.Description)</p>
+                        <div class="product-card-footer">
+                            <strong>@product.Price.ToString("C")</strong>
+                            <div class="card-actions">
+                                <button class="icon-button" title="Editar" @onclick="() => OpenEditModal(product)">Edit</button>
+                                <button class="icon-button danger" title="Eliminar" @onclick="() => OpenDeleteModal(product)">Del</button>
+                            </div>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+@if (isFormModalOpen)
+{
+    <div class="modal-backdrop" @onclick="CloseModals">
+        <div class="modal-card" @onclick:stopPropagation>
+            <EditForm Model="productForm" OnValidSubmit="SaveProductAsync">
+                <DataAnnotationsValidator />
+                <header class="modal-header">
+                    <div>
+                        <span class="eyebrow">@formMode</span>
+                        <h2>@(editingProduct is null ? "Nuevo producto" : "Editar producto")</h2>
+                    </div>
+                    <button class="icon-button" type="button" @onclick="CloseModals">Cerrar</button>
+                </header>
+
+                <label class="field">
+                    <span>Nombre</span>
+                    <InputText @bind-Value="productForm.Name" />
+                    <ValidationMessage For="() => productForm.Name" />
+                </label>
+
+                <label class="field">
+                    <span>Descripcion</span>
+                    <InputTextArea @bind-Value="productForm.Description" rows="4" />
+                </label>
+
+                <div class="form-row">
+                    <label class="field">
+                        <span>Precio</span>
+                        <InputNumber @bind-Value="productForm.Price" />
+                        <ValidationMessage For="() => productForm.Price" />
+                    </label>
+
+                    <label class="field">
+                        <span>Stock</span>
+                        <InputNumber @bind-Value="productForm.Stock" />
+                        <ValidationMessage For="() => productForm.Stock" />
+                    </label>
+                </div>
+
+                <footer class="modal-actions">
+                    <button class="button ghost" type="button" @onclick="CloseModals">Cancelar</button>
+                    <button class="button primary" type="submit" disabled="@isSaving">
+                        @(isSaving ? "Guardando..." : "Guardar")
+                    </button>
+                </footer>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@if (deletingProduct is not null)
+{
+    <div class="modal-backdrop" @onclick="CloseModals">
+        <div class="modal-card compact" @onclick:stopPropagation>
+            <header class="modal-header">
+                <div>
+                    <span class="eyebrow">Eliminar</span>
+                    <h2>@deletingProduct.Name</h2>
+                </div>
+                <button class="icon-button" type="button" @onclick="CloseModals">Cerrar</button>
+            </header>
+            <p>Esta accion eliminara el producto y SQL Server registrara la auditoria.</p>
+            <footer class="modal-actions">
+                <button class="button ghost" type="button" @onclick="CloseModals">Cancelar</button>
+                <button class="button danger" type="button" @onclick="DeleteProductAsync" disabled="@isSaving">
+                    @(isSaving ? "Eliminando..." : "Eliminar")
+                </button>
+            </footer>
+        </div>
+    </div>
+}
+
+@code {
+    private List<ProductDto> products = [];
+    private ProductFormModel productForm = new();
+    private ProductDto? editingProduct;
+    private ProductDto? deletingProduct;
+    private string? errorMessage;
+    private string searchText = string.Empty;
+    private bool isLoading = true;
+    private bool isSaving;
+    private bool isFormModalOpen;
+
+    private string formMode => editingProduct is null ? "Agregar" : "Editar";
+
+    private IEnumerable<ProductDto> FilteredProducts =>
+        string.IsNullOrWhiteSpace(searchText)
+            ? products
+            : products.Where(product =>
+                product.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                (product.Description?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false));
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Session.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/auth");
+            return;
+        }
+
+        await LoadProductsAsync();
+    }
+
+    private async Task LoadProductsAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            products = (await ApiClient.GetProductsAsync(CancellationToken.None)).ToList();
+        }
+        catch (Exception exception)
+        {
+            errorMessage = exception.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void OpenCreateModal()
+    {
+        editingProduct = null;
+        productForm = new ProductFormModel();
+        isFormModalOpen = true;
+    }
+
+    private void OpenEditModal(ProductDto product)
+    {
+        editingProduct = product;
+        productForm = ProductFormModel.FromProduct(product);
+        isFormModalOpen = true;
+    }
+
+    private void OpenDeleteModal(ProductDto product)
+    {
+        deletingProduct = product;
+    }
+
+    private void CloseModals()
+    {
+        isFormModalOpen = false;
+        editingProduct = null;
+        deletingProduct = null;
+        isSaving = false;
+    }
+
+    private async Task SaveProductAsync()
+    {
+        if (Session.CurrentUser is null)
+        {
+            Navigation.NavigateTo("/auth");
+            return;
+        }
+
+        isSaving = true;
+        errorMessage = null;
+
+        try
+        {
+            if (editingProduct is null)
+            {
+                _ = await ApiClient.CreateProductAsync(productForm, CancellationToken.None);
+            }
+            else
+            {
+                _ = await ApiClient.UpdateProductAsync(
+                    editingProduct.Id,
+                    Session.CurrentUser.UserId,
+                    productForm,
+                    CancellationToken.None);
+            }
+
+            CloseModals();
+            await LoadProductsAsync();
+        }
+        catch (Exception exception)
+        {
+            errorMessage = exception.Message;
+            isSaving = false;
+        }
+    }
+
+    private async Task DeleteProductAsync()
+    {
+        if (deletingProduct is null || Session.CurrentUser is null)
+        {
+            return;
+        }
+
+        isSaving = true;
+        errorMessage = null;
+
+        try
+        {
+            await ApiClient.DeleteProductAsync(
+                deletingProduct.Id,
+                Session.CurrentUser.UserId,
+                CancellationToken.None);
+
+            CloseModals();
+            await LoadProductsAsync();
+        }
+        catch (Exception exception)
+        {
+            errorMessage = exception.Message;
+            isSaving = false;
+        }
+    }
+
+    private void SignOut()
+    {
+        Session.SignOut();
+        Navigation.NavigateTo("/auth");
+    }
+}

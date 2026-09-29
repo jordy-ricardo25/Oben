@@ -7,7 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Oben.Application\Oben.Application.csproj" />
+    <ProjectReference Include="..\Oben.Infrastructure\Oben.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
